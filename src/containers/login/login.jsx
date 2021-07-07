@@ -1,10 +1,21 @@
 import React,{Component} from 'react'
 import {Form,Icon,Input,Button,message} from 'antd';
+import {connect} from 'react-redux'
+import {reqLogin} from '../../api/index'
+import {Redirect} from 'react-router-dom'
+// import qs from 'querystring'
+// import axios from 'axios'
 import './css/login.less'
 import logo from './imgs/logo.png'
+import {createSaveUserInfoAction} from '../../redux/actions/login_action'
+
 const {Item} = Form
 
 class Login extends Component{
+
+  
+
+ 
   // 密码的验证器
   pwdValidator=(rule,value,callback)=>{
 
@@ -31,9 +42,36 @@ class Login extends Component{
   //点击登录按钮的回调
   handleSubmit = (event)=>{
     event.preventDefault();//阻止默认事件----禁止form表单提交----通过ajax请求
-    this.props.form.validateFields((err, values) => {
+    this.props.form.validateFields(async(err, values) => {
+      //values的值是{username:xxx,password:xxx}
+      // console.log(values)
+      const {username,password}=values;
+      
       if (!err) {
-        alert('向服务器发送请求')
+        
+        // reqLogin(username,password)
+        // .then(result=>{
+        //   console.log(result)
+        // })
+        // .catch(reason=>{
+        //   console.log(reason)
+        // })
+        let result=await reqLogin(username,password)
+        console.log(result)
+        const {status,msg,data}=result;
+        if(status===0){
+          console.log(data);
+          
+            
+            //1、先保存服务器返回的user信息，还有token，交由redux管理
+            this.props.saveUserInfo(data)
+            //2、然后跳转admin
+            this.props.history.replace('/admin')
+        }else{
+            message.warning(msg,1)
+        }
+      }else{
+        message.error('表单错误')
       }
     });
     
@@ -43,6 +81,10 @@ class Login extends Component{
 
   render(){
     const {getFieldDecorator} = this.props.form;
+    const {isLogin}=this.props
+    if(isLogin){
+      return <Redirect to='/admin'/>
+    }
     return (
       <div className="login">
         <header>
@@ -102,12 +144,38 @@ class Login extends Component{
   }
 }
 
+export default connect(
+  state=>({isLogin:state.userInfo.isLogin}),
+  {
+    saveUserInfo:createSaveUserInfoAction,
+    
+  }
+)(Form.create()(Login))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* 严重注意：
     1.暴露的根本不是我们定义的Login组件，而是经过加工（包装）的Login组件。
     2.Form.create()调用返回一个函数，该函数加工了Login组件，生成了一个新组件，新组件实例对象的props多了一个强大的form属性，能完成验证。
     3.我们暴露出去的不再是Login，而是通过Login生成的一个新组件。 
 */
-export default Form.create()(Login)
+
 
 /* 
   总结：
