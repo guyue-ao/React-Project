@@ -6,11 +6,18 @@ import {Redirect} from 'react-router-dom'
 // import qs from 'querystring'
 // import axios from 'axios'
 import './css/login.less'
-import logo from './imgs/logo.png'
+import logo from '../../static/imgs/logo.png'
 import {createSaveUserInfoAction} from '../../redux/actions/login_action'
 
 const {Item} = Form
-
+@connect(
+  state=>({isLogin:state.userInfo.isLogin}),
+  {
+    saveUserInfo:createSaveUserInfoAction,
+    
+  }
+)
+@Form.create()
 class Login extends Component{
 
   
@@ -57,16 +64,16 @@ class Login extends Component{
         //   console.log(reason)
         // })
         let result=await reqLogin(username,password)
-        console.log(result)
+        // console.log(result)
         const {status,msg,data}=result;
         if(status===0){
-          console.log(data);
+          // console.log(data);
           
             
             //1、先保存服务器返回的user信息，还有token，交由redux管理
             this.props.saveUserInfo(data)
             //2、然后跳转admin
-            this.props.history.replace('/admin')
+            this.props.history.replace('/admin/home')
         }else{
             message.warning(msg,1)
         }
@@ -143,14 +150,15 @@ class Login extends Component{
     )
   }
 }
+export default Login
 
-export default connect(
-  state=>({isLogin:state.userInfo.isLogin}),
-  {
-    saveUserInfo:createSaveUserInfoAction,
+// export default connect(
+//   state=>({isLogin:state.userInfo.isLogin}),
+//   {
+//     saveUserInfo:createSaveUserInfoAction,
     
-  }
-)(Form.create()(Login))
+//   }
+// )(Form.create()(Login))
 
 
 
